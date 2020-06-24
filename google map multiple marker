@@ -1,0 +1,131 @@
+// map
+function initMap(latlong) {
+  var mark1 = `${baseUrl}frontend/images/icon/mark1.png`;
+	var mark2 = `${baseUrl}frontend/images/icon/mark2.png`;
+	latitude = latitude;
+	longitude = longitude;
+	var center = {
+		lat: latitude,
+		lng: longitude
+	};
+	var map = new google.maps.Map(document.getElementById('map'), {
+		zoom: 4,
+		center: center,
+		scrollwheel: true,
+		animation: google.maps.Animation.DROP,
+		draggable: true,
+		disableDefaultUI: true,
+		zoomControl: true,
+		fullscreenControl: true
+	});
+
+	// Create the DIV to hold the control and call the CenterControl()
+        // constructor passing in this DIV.
+        var centerControlDiv = document.createElement('div');
+		var centerControl = new CenterControl(centerControlDiv, map);
+		centerControlDiv.index = 1;
+		map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+
+if(latlong){
+   // console.log("sdsds");console.log(latlong);
+	$.each(latlong, function (key, value) {
+		addMArker({
+			coords: {
+				lat: parseFloat(value.proplatlong.lat),
+				lng: parseFloat(value.proplatlong.longt)
+			},
+			iconImage: mark1,
+			content: `<div id ="properties_${value.propertyid}">
+					<a href="${value.link}" target="_blank" title="Click for more info"><img style="width:100%;height:150px" src="${value.image}"></a>
+					<h5>${value.propertyname}</h5>
+						<a href="${value.link}" target="_blank" title="Click for more info">
+							<p>${value.bedrooms} | ${value.baths} |  ${value.propertytype}</p>
+						</a>
+					</div>`,
+			propertyid: value.propertyid		
+		}); //add marker end
+
+	});  // foreach end
+
+
+
+	// drag event
+	map.addListener('idle', function() {
+		if($('#searchWhenMove').is(":checked")){
+			localStorage.setItem("searchWhenMove", "checked");
+			ne_lng = map.getBounds().getNorthEast().lng()-0.01;
+			sw_lng = map.getBounds().getSouthWest().lng()+0.01;
+			ne_lat = map.getBounds().getNorthEast().lat()-0.01;
+			sw_lat = map.getBounds().getSouthWest().lat()+0.01;
+			const filters = $("#filterForm").serialize();
+			loadProperties(pageNumber, filters, ne_lat, ne_lng, sw_lat, sw_lng);
+			$(window).scrollTop(350);
+		}
+  }, {passive: true});
+}
+	function addMArker(property) {
+			var marker = new google.maps.Marker({
+				position: property.coords,
+				map: map,
+				icon: property.iconImage
+			});
+			$(`#property_${property.propertyid}`).mouseover(function () {
+				var hovericon = mark2;
+				marker.setIcon(hovericon);
+				marker.setZIndex(99999);
+				if($('#searchWhenMove').prop('checked') == false){
+					window.setTimeout(function () {
+					//infoWindow.open(map, marker);
+						map.panTo(marker.getPosition());
+					}, 100);
+				}
+				
+			});
+			$(`#property_${property.propertyid}`).mouseout(function () {
+				marker.setIcon(property.iconImage);
+				infoWindow.close();
+				marker.setZIndex(undefined);
+			});
+			if (property.iconImage) {
+				marker.setIcon(property.iconImage);
+			}
+			if (property.content) {
+				var infoWindow = new google.maps.InfoWindow({
+					content: property.content
+				});
+				marker.addListener('click', function () {
+					infoWindow.close();
+					infoWindow.open(map, marker);
+					window.setTimeout(function () {
+						map.panTo(marker.getPosition());
+					}, 1000);
+				});
+			}
+		}
+}
+
+#create box on map
+function CenterControl(controlDiv, map) {
+        // Set CSS for the control border.
+        var controlUI = document.createElement('div');
+        controlUI.style.backgroundColor = '#fff';
+        controlUI.style.border = '2px solid #fff';
+        controlUI.style.borderRadius = '3px';
+        controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
+        controlUI.style.cursor = 'pointer';
+        controlUI.style.marginTop = '11px';
+        controlUI.style.textAlign = 'center';
+        controlUI.style.marginLeft = '40px';
+        controlDiv.appendChild(controlUI);
+            // appending the checkbox 
+			// and label to div 
+			let checked = '';
+			if(localStorage.getItem("searchWhenMove")){
+				checked = "checked";
+			}
+            controlUI.innerHTML = `<div class="checkbox mapcheckbox">
+					<label class="mapCheckLabel"><input type="checkbox" ${checked} id="searchWhenMove" value="">Search When I move map</label>
+					</div>`; 
+					
+      }
+      <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY" async></script>
